@@ -59,12 +59,13 @@ module.exports = function (db, checkJwt) {
     router.get('/:id/thumbnails/:image', checkJwt, async function (req, res) {
         "use strict";
         try {
-            let image = await itemDao.getThumbnailByItemId(req.params.id, req.params.image, req.user.sub);
+            let image = await itemDao.getThumbnailByItemId(req.params.id, req.params.image);
         
             res.set('Content-Type', 'image/jpeg');
-            res.send(Buffer.from(image, 'base64'))
+            res.send(image);
         }
         catch(err) {
+            console.error('error:' + JSON.stringify(err));
             res.status(500).json(err);
         }
     });
