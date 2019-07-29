@@ -21,10 +21,10 @@ class ItemDao {
                     let item = value.toObject();
                     if(includeImages) {
                         try {
-                            let responseFilesList = await dropboxService.getListFolder(id, userId);
+                            let responseFilesList = await dropboxService.getListFolder(id);
         
                             let images = [];
-                            for(let entry of responseFilesList.entries) {
+                            for(let entry of responseFilesList) {
                                 images.push(entry.name);
                             }
                             item.images = images;
@@ -39,9 +39,9 @@ class ItemDao {
         });
     }
 
-    getThumbnailByItemId(id, image, userId) {
+    getThumbnailByItemId(id, image) {
         return new Promise((resolve, reject) => {
-            dropboxService.getThumbnail(`${id}/${image}`, userId)
+            dropboxService.getThumbnail(`${id}/${image}`)
                 .then(response => resolve(response))
                 .catch(err => reject(err))
         })
@@ -144,9 +144,9 @@ class ItemDao {
         });
     }
 
-    addImageToItem(itemId, filename, file, userId) {
+    addImageToItem(itemId, filename, file) {
         return new Promise((resolve, reject) => {
-            dropboxService.uploadFile(`${itemId}/${filename}`, file, userId)
+            dropboxService.uploadFile(`${itemId}/${filename}`, file)
                 .then(response => resolve(response))
                 .catch(err => reject(err));
         });
@@ -154,7 +154,7 @@ class ItemDao {
 
     deleteImageFromItem(itemId, filename, userId) {
         return new Promise((resolve, reject) => {
-            dropboxService.deleteFile(`${itemId}/${filename}`, userId)
+            dropboxService.deleteFile(`${itemId}/${filename}`)
                 .then(response => resolve(response))
                 .catch(err => reject(err));
         });

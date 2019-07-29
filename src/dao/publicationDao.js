@@ -74,8 +74,8 @@ async function getLinkImages(item, userId) {
     }
     for(let image of item.images) {
         try {
-            let responseTemporalLink = await dropboxService.getTemporalLink(`${item._id}/${image}`, userId);
-            imageLinks.push({"source": responseTemporalLink.link});
+            let responseTemporalLink = await dropboxService.getTemporalLink(`${item._id}/${image}`);
+            imageLinks.push({"source": responseTemporalLink});
         }
         catch(err) {
             console.error(err);
