@@ -82,11 +82,16 @@ class DropboxService {
 }
 
 function createError(err) {
+    let message;
     if (err.user_message === undefined) {
-        return Error(err.error_summary);
+        message = err.error_summary;
     } else {
-        return Error(err.user_message.text);
+        message = err.user_message.text;
     }
+
+    const error = new Error(message);
+    error.isOperational = true;
+    return error;
 }
 
 module.exports.dropboxService = new DropboxService();

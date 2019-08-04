@@ -29,14 +29,8 @@ class PublicationDao {
 
             let itemResponse = await this.itemDao.addMLPublication(itemId, publication);
             return itemResponse;
-        }
-        catch(err){
-            console.error('error', err);
-            const error = {};
-            error.message = 'Error occurred while publishing item';
-            error.details = err;
-            error.code = 500;
-            throw error;
+        } catch (err) {
+            throw err;
         }
     }
 
@@ -45,9 +39,7 @@ class PublicationDao {
             let publication = await mercadolibreService.getItem(publicationId);
             this.itemDao.addMLPublication(itemId, publication);
             return publication
-        }
-        catch(err) {
-            console.log('error', err);
+        } catch (err) {
             throw err;
         }
     }
@@ -59,9 +51,7 @@ class PublicationDao {
 
                 await mercadolibreService.updateItem(item.publications.mercadolibre.id, price, title, status, imageLinks);
             }
-        }
-        catch(err) {
-            console.log('error', err);
+        } catch (err) {
             throw err;
         }
     }

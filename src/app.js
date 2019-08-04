@@ -11,6 +11,7 @@ const jwksRsa = require('jwks-rsa');
 const db = require('./dbs');
 const itemsRouter = require('./routes/items');
 const ordersRouter = require('./routes/orders');
+const errorHandler = require('./errorHandler').errorHandler;
 
 db.once('open', function() {
   const app = express();
@@ -62,15 +63,11 @@ db.once('open', function() {
 
   // Set up express
 
-  app.use(function (err, req, res, next) {
-      console.error(err.stack);
-      if(err.status !== undefined) {
-        res.status(err.status).send(err);
-      } 
-      else {
-        res.status(500).send(err);
-      }
-     
+  app.use(async (err, req, res, next) => {
+    const isOperationalError = await errorHandler.handleError(err, res);
+    if (!isOperationalError) {
+      next(err);
+    }
   });
 
   // Start the server listening

@@ -2,103 +2,126 @@ const rp = require('request-promise-native');
 
 class MercadolibreService {
     constructor() {
-        this.access_token = null;
-        this.expires_in = null;
-        this.refresh_token = null;
+        this.accessToken = null;
+        this.expiresIn = null;
+        this.refreshToken = null;
+        this.tokenTimestamp = null;
     }
 
-    getItem(publicationId) {
-        return new Promise((resolve, reject) => {
-            rp({
-                url: `https://api.mercadolibre.com/items/${publicationId}`,
+    async getItem(publicationId) {
+        try {
+            let response = await rp({
+                url: `https://api.mercadolibre.com/items/${publicationId}+lol`,
                 method: "GET",
                 json: true
-            })
-            .then(response => resolve(response))
-            .catch(err => reject(err));
-        })
+            });
+            return response;
+        } catch (err) {
+            throw createError(err);
+        }
     }
 
-    createItem(description, price, title, imageLinks) {
-        const _this = this;
-        return new Promise((resolve, reject) => {
-            _this.getToken()
-                .then(token => {
-                    rp({
-                        url: "https://api.mercadolibre.com/items?access_token=" + token,
-                        method: "POST",
-                        json: true,
-                        body: {
-                            "title": title,
-                            "category_id":"MLM14739",
-                            "price": price,
-                            "currency_id":"MXN",
-                            "available_quantity": 1,
-                            "buying_mode":"buy_it_now",
-                            "listing_type_id":"bronze",
-                            "condition":"new",
-                            "description": {"plain_text": description},
-                            "pictures": imageLinks
-                        }
-                    })
-                    .then(response => resolve(response))
-                    .catch(err => reject(err));
-                })
-                .catch(err => reject(err));
-        })
+    async createItem(description, price, title, imageLinks) {
+        const token = await this.getToken();
+        try {
+            let response = await rp({
+                url: "https://api.mercadolibre.com/items?access_token=" + token,
+                method: "POST",
+                json: true,
+                body: {
+                    "title": title,
+                    "category_id":"MLM14739",
+                    "price": price,
+                    "currency_id":"MXN",
+                    "available_quantity": 1,
+                    "buying_mode":"buy_it_now",
+                    "listing_type_id":"bronze",
+                    "condition":"new",
+                    "description": {"plain_text": description},
+                    "pictures": imageLinks
+                }
+            });
+            return response;
+        } catch (err) {
+            throw createError(err);
+        }
     }
 
-    updateItem(publicationId, price, title, status, imageLinks) {
-        const _this = this;
-        return new Promise((resolve, reject) => {
-            _this.getToken()
-                .then(token => {
-                    rp({
-                        url: `https://api.mercadolibre.com/items/${publicationId}?access_token=${token}`,
-                        method: "PUT",
-                        json: true,
-                        body: {
-                            "title": title,
-                            "price": price,
-                            "status": status,
-                            "available_quantity": 1,
-                            "pictures": imageLinks
-                        }
-                    })
-                    .then(response => resolve(response))
-                    .catch(err => reject(err));
-                })
-                .catch(err => reject(err));
-        });
+    async updateItem(publicationId, price, title, status, imageLinks) {
+        const token = await this.getToken();
+        try {
+            let response = await rp({
+                url: `https://api.mercadolibre.com/items/${publicationId}?access_token=${token}`,
+                method: "PUT",
+                json: true,
+                body: {
+                    "title": title,
+                    "price": price,
+                    "status": status,
+                    "available_quantity": 1,
+                    "pictures": imageLinks
+                }
+            });
+            return response;
+        } catch (err) {
+            throw createError(err);
+        }
     }
 
-    getToken() {
-        const _this = this;
-        return new Promise((resolve, reject) => {
-            if(_this.access_token === null) {
-                rp({
+    async getToken() {
+        if (this.accessToken !== null && !this.isTokenExpired()) {
+            return this.accessToken;
+        }
+        else {
+            let parameters = null;
+            if (this.accessToken === null) {
+                parameters = {
+                    grant_type: 'client_credentials',
+                    client_id: process.env.MELI_CLIENT_ID,
+                    client_secret: process.env.MELI_CLIENT_SECRET
+                }
+            } else {
+                parameters = {
+                    grant_type: 'refresh_token',
+                    client_id: process.env.MELI_CLIENT_ID,
+                    client_secret: process.env.MELI_CLIENT_SECRET,
+                    refresh_token: _this.refresh_token
+                }
+            }
+
+            try {
+                let response = await rp({
                     method: 'POST',
                     uri: 'https://api.mercadolibre.com/oauth/token',
                     json: true,
-                    form: {
-                        grant_type: 'client_credentials',
-                        client_id: process.env.MELI_CLIENT_ID,
-                        client_secret: process.env.MELI_CLIENT_SECRET
-                    }
-                })
-                .then(response => {
-                    _this.access_token = response.access_token;
-                    _this.expires_in = response.expires_in;
-                    _this.refresh_token = response.refresh_token;
-                    resolve(_this.access_token);
-                })
-                .catch(err => reject(err));
+                    form: parameters
+                });
+                this.accessToken = response.access_token;
+                this.expiresIn = response.expires_in * 1000;
+                this.refreshToken = response.refresh_token;
+                this.tokenTimestamp = Date.now();
+
+                return this.accessToken; 
+            } catch (err) {
+                throw createError(err);
             }
-            else {
-                resolve(_this.access_token);
-            }
-        });
+        }
     }
+
+    isTokenExpired() {
+        const now = Date.now();
+        if (now >= this.tokenTimestamp + this.expiresIn) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+function createError(err) {
+    const error = new Error(`${err.error.message}, cause: ${JSON.stringify(err.error.cause)}`);
+    error.isOperational = true;
+    return error;
 }
 
 module.exports.mercadolibreService = new MercadolibreService();
