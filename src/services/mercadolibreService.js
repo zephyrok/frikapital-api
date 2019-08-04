@@ -11,7 +11,7 @@ class MercadolibreService {
     async getItem(publicationId) {
         try {
             let response = await rp({
-                url: `https://api.mercadolibre.com/items/${publicationId}+lol`,
+                url: `https://api.mercadolibre.com/items/${publicationId}`,
                 method: "GET",
                 json: true
             });
